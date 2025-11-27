@@ -76,6 +76,7 @@ const crop = document.getElementById("batch-crop").value.trim();
 const weight = parseFloat(document.getElementById("batch-weight").value);
 const storage = document.getElementById("batch-storage").value;
 const location = document.getElementById("batch-location").value;
+const dateType = document.getElementById("batch-date-type").value;
 const file = document.getElementById("batch-image").files[0];
 const dateRaw = document.getElementById("batch-date").value;
 const dateIso = dateRaw ? new Date(dateRaw).toISOString() : null;
@@ -85,6 +86,7 @@ userId: user.uid,
 cropType: crop,
 estimatedWeightKg: weight,
 harvestDate: dateIso,
+dateType: dateType,
 storageType: storage,
 storageLocationFreeText: location,
 status: "active",
@@ -151,6 +153,36 @@ async function processQueue() {
 }
 
 // Render + analytics + actions
+function formatDate(isoString) {
+    if (!isoString) return "N/A";
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        });
+    } catch {
+        return isoString;
+    }
+}
+
+function formatDateTime(isoString) {
+    if (!isoString) return "N/A";
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    } catch {
+        return isoString;
+    }
+}
+
 function renderBatches() {
     const list = document.getElementById("active-batches");
     const noMsg = document.getElementById("no-batches-msg");
@@ -172,10 +204,12 @@ function renderBatches() {
     active.forEach((b, idx) => {
         const card = document.createElement("div");
         card.className = "batch-card";
+        const dateTypeLabel = b.dateType || "Harvest";
         card.innerHTML = `
       <p><strong>${b.cropType}</strong> (${b.estimatedWeightKg} kg)</p>
-      <p>${b.harvestDate} – ${b.storageType}</p>
-      <p>${b.storageLocationFreeText}</p>
+      <p>${dateTypeLabel} Date: ${formatDate(b.harvestDate)} – ${b.storageType}</p>
+      <p>Location: ${b.storageLocationFreeText}</p>
+      <p>Date Added: ${formatDateTime(b.createdAt)}</p>
       <p>Status: ${b.status}${b.riskStatus ? " (" + b.riskStatus + ")" : ""}</p>
       ${b.etclHours ? `<p>ETCL: ${b.etclHours} ঘন্টা</p>` : ""}
       ${b.lastRiskSummaryBn ? `<p>${b.lastRiskSummaryBn}</p>` : ""}
@@ -216,6 +250,7 @@ async function updateStatus(btn, status) {
     if (!batch) return;
     batch.status = status;
     if (status === "mitigated") awardRiskMitigatedBadge();
+    if (status === "completed") awardCompletionistBadge();
     window.HG_offline?.saveBatches(batchesCache);
     renderBatches();
 
@@ -274,9 +309,38 @@ async function awardRiskMitigatedBadge() {
     if (!snap.exists()) return;
     const data = snap.data();
     const badges = data.badges || [];
-    if (!badges.includes("Risk Mitigated Expert")) {
+    
+    // Count how many batches have been mitigated
+    const mitigatedCount = batchesCache.filter(b => b.status === "mitigated").length;
+    
+    // Only award badge if at least 5 batches have been mitigated
+    if (mitigatedCount >= 5 && !badges.includes("Risk Mitigated Expert")) {
         badges.push("Risk Mitigated Expert");
         await updateDoc(doc(db, "users", user.uid), { badges });
+        alert("Achievement unlocked: Risk Mitigated Expert badge earned!");
+        await loadProfile();
+    }
+}
+
+async function awardCompletionistBadge() {
+    const { loadProfile } = await import("./profile.js");
+    const { db, fbDbApi } = await import("../src/firebase-config.js");
+    const { doc, getDoc, updateDoc } = fbDbApi;
+    const user = window.HG.getCurrentUser();
+    if (!user) return;
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const badges = data.badges || [];
+    
+    // Count how many batches have been completed
+    const completedCount = batchesCache.filter(b => b.status === "completed").length;
+    
+    // Only award badge if at least 5 batches have been completed
+    if (completedCount >= 5 && !badges.includes("Completionist")) {
+        badges.push("Completionist");
+        await updateDoc(doc(db, "users", user.uid), { badges });
+        alert("Achievement unlocked: Completionist badge earned!");
         await loadProfile();
     }
 }
