@@ -27,15 +27,19 @@ export function initUI() {
         weatherView.classList.remove("hidden");
     });
 
+    const globalNav = document.querySelector(".nav");
+
     // Helpers to show/hide top-level sections
     window.HG_UI = {
         showAuth() {
             authSection?.classList.remove("hidden");
             mainSection?.classList.add("hidden");
+            globalNav?.classList.remove("hidden");
         },
         showApp() {
             authSection?.classList.add("hidden");
             mainSection?.classList.remove("hidden");
+            globalNav?.classList.add("hidden");
         }
     };
 }
