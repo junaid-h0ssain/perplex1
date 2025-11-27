@@ -262,16 +262,48 @@ profileForm.addEventListener("submit", async (e) => {
 
 passwordForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser) {
+        alert("You are not logged in.");
+        return;
+    }
     const currentPwd = document.getElementById("current-password").value;
     const newPwd = document.getElementById("new-password").value;
+
+    // Validate inputs
+    if (!currentPwd || !newPwd) {
+        alert("Please fill in both password fields.");
+        return;
+    }
+
+    if (newPwd.length < 6) {
+        alert("New password must be at least 6 characters long.");
+        return;
+    }
+
     const cred = EmailAuthProvider.credential(currentUser.email, currentPwd);
     try {
-        await reauthenticateWithCredential(currentUser, cred);
+        console.log("Reauthenticating user...");
+        const result = await reauthenticateWithCredential(currentUser, cred);
+        console.log("Reauthentication successful, updating password...");
         await updatePassword(currentUser, newPwd);
-        alert("Password updated.");
-    } catch {
-        alert("Password update failed.");
+        console.log("Password update successful");
+        alert("Password updated successfully.");
+        passwordForm.reset();
+        document.getElementById("current-password").value = "";
+        document.getElementById("new-password").value = "";
+    } catch (error) {
+        console.error("Password update error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        if (error.code === "auth/wrong-password") {
+            alert("Current password is incorrect.");
+        } else if (error.code === "auth/weak-password") {
+            alert("New password is too weak. Use at least 6 characters.");
+        } else if (error.code === "auth/requires-recent-login") {
+            alert("Please log in again for security reasons, then try updating your password.");
+        } else {
+            alert("Password update failed: " + (error.message || "Unknown error"));
+        }
     }
 });
 
