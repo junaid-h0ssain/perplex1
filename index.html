@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HarvestGuard - Home</title>
+  <script>
+    // Simple routing: if user is logged in, redirect to app
+    window.addEventListener('load', () => {
+      const isLoggedIn = localStorage.getItem('harvestguard_user');
+      if (isLoggedIn) {
+        window.location.href = './app.html';
+      }
+    });
+  </script>
+</head>
+<body>
+  <!-- Welcome page content loaded here -->
+  <div id="welcome-container"></div>
+
+  <script>
+    // Load welcome.html content
+    fetch('./public/welcome.html')
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const body = doc.body;
+        
+        // Copy styles from welcome.html
+        const styles = doc.querySelectorAll('style');
+        styles.forEach(style => document.head.appendChild(style.cloneNode(true)));
+        
+        // Copy body content
+        document.getElementById('welcome-container').innerHTML = body.innerHTML;
+        
+        // Re-attach event listeners
+        const enterBtn = document.getElementById('enter-app-btn');
+        if (enterBtn) {
+          enterBtn.addEventListener('click', () => {
+            window.location.href = './app.html';
+          });
+        }
+      })
+      .catch(err => console.error('Failed to load welcome page:', err));
+  </script>
+</body>
+</html>

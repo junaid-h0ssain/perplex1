@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>HarvestGuard</title>
+  <link rel="stylesheet" href="./src/style.css" />
+  <!-- Firebase SDKs -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js"></script>
+</head>
+
+<body>
+  <div id="app">
+
+    <section id="auth-section" class="hidden">
+      <!-- LOGIN CARD (default visible) -->
+      <div id="login-card" class="card">
+        <h2>Login</h2>
+
+        <form id="login-form">
+          <input type="email" id="login-email" placeholder="Email" required />
+          <input type="password" id="login-password" placeholder="Password" required />
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+
+        <p class="divider">Or</p>
+
+        <!-- phone + OTP (UI only for now) -->
+        <form id="phone-login-form">
+          <input type="tel" id="login-phone" placeholder="+880123456789" />
+          <button type="button" id="send-otp-btn" class="btn btn-dark">Send OTP</button>
+        </form>
+
+        <p class="divider">Or Google Login</p>
+        <button type="button" id="google-login-btn" class="btn btn-google">
+          Login with Google
+        </button>
+
+        <p class="divider">Or</p>
+        <button type="button" id="reset-password-btn" class="btn btn-dark">
+          Forgot Password?
+        </button>
+
+        <button id="show-register" class="link-btn">
+          Create account
+        </button>
+      </div>
+
+      <!-- REGISTER CARD (hidden by default) -->
+      <div id="register-card" class="card hidden">
+        <h2>Register</h2>
+        <form id="register-form">
+          <input type="text" id="reg-name" placeholder="Full name" required />
+          <input type="email" id="reg-email" placeholder="Email" required />
+          <input type="password" id="reg-password" placeholder="Password" required />
+          <input type="tel" id="reg-phone" placeholder="Phone" />
+          <select id="reg-language">
+            <option value="en">English</option>
+            <option value="bn">বাংলা</option>
+          </select>
+          <button type="submit" class="btn btn-primary">Sign up</button>
+        </form>
+
+        <button id="show-login" class="link-btn">
+          Back to login
+        </button>
+      </div>
+    </section>
+
+
+    <!-- Main App -->
+    <section id="main-section" class="hidden">
+      <nav id="top-nav">
+        <span id="app-title">HarvestGuard</span>
+        <div>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="bn">বাংলা</option>
+          </select>
+          <button id="nav-dashboard">Dashboard</button>
+          <button id="nav-profile">Profile</button>
+          <button id="logout-btn">Logout</button>
+        </div>
+      </nav>
+
+      <!-- Dashboard -->
+      <section id="dashboard-view">
+        <h2 id="dash-title">Dashboard</h2>
+
+        <div id="analytics">
+          <div>Active batches: <span id="stat-active">0</span></div>
+          <div>Completed batches: <span id="stat-completed">0</span></div>
+          <div>Mitigated risks: <span id="stat-mitigated">0</span></div>
+          <div>Total weight (kg): <span id="stat-weight">0</span></div>
+        </div>
+
+        <h3>Create batch</h3>
+        <form id="batch-form">
+          <input id="batch-crop" placeholder="Crop type" required />
+          <input id="batch-weight" type="number" step="0.01" placeholder="Weight (kg)" required />
+          <input id="batch-date" type="date" required />
+          <select id="batch-storage" required>
+            <option value="">Select storage type</option>
+            <option value="Jute Bag Stack">Jute Bag Stack</option>
+            <option value="Silo">Silo</option>
+            <option value="Open Area">Open Area</option>
+          </select>
+          <select id="batch-location" required></select>
+          <label>
+            Image:
+            <input id="batch-image" type="file" accept="image/*" />
+          </label>
+          <button type="submit">Add batch</button>
+        </form>
+
+        <h3>Active batches</h3>
+        <div id="active-batches"></div>
+        <div id="no-batches-msg" class="hidden">No active batches.</div>
+
+        <h3>Badges</h3>
+        <ul id="badges-list"></ul>
+        <div id="no-badges-msg" class="hidden">No badges earned yet.</div>
+
+        <h3>Risk alerts</h3>
+        <div id="alerts-container"></div>
+
+        <h3>Export data</h3>
+        <button id="export-btn">Export JSON + CSV</button>
+      </section>
+
+      <!-- Profile -->
+      <section id="profile-view" class="hidden">
+        <h2>Profile</h2>
+        <div id="profile-display">
+          <p>Name: <span id="profile-name"></span></p>
+          <p>Email: <span id="profile-email"></span></p>
+          <p>Phone: <span id="profile-phone"></span></p>
+          <p>Bio: <span id="profile-bio"></span></p>
+          <p>Created: <span id="profile-created"></span></p>
+        </div>
+
+        <h3>Edit profile</h3>
+        <form id="profile-form">
+          <input id="edit-name" placeholder="Name" />
+          <input id="edit-phone" placeholder="Phone" />
+          <textarea id="edit-bio" placeholder="Short bio"></textarea>
+          <button type="submit">Save profile</button>
+        </form>
+
+        <h3>Change password</h3>
+        <form id="password-form">
+          <input id="current-password" type="password" placeholder="Current password" required />
+          <input id="new-password" type="password" placeholder="New password" required />
+          <button type="submit">Update password</button>
+        </form>
+      </section>
+    </section>
+  </div>
+
+  <script type="module" src="./src/firebase-config.js"></script>
+  <script type="module" src="./src/config.js"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
