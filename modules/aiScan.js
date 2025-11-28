@@ -44,26 +44,35 @@ export function initAiScanner() {
             const base64Payload = base64.split(",")[1];
             // Set endpoint with api_key as query param
             const url = `${RF_CONFIG.apiUrl}?api_key=${RF_CONFIG.apiKey}`;
-            // Build body as application/x-www-form-urlencoded (image=...)
-            const params = new URLSearchParams();
-            params.append("image", base64Payload); // remove prefix
 
             // Debug logs
             console.log("[AI SCAN] API URL:", url);
             console.log("[AI SCAN] Base64 preview:", base64.substring(0, 50) + "...");
-            console.log("[AI SCAN] POST body:", params.toString().substring(0, 120) + "...");
+
             // Post to Roboflow per docs
+            // Send the base64 string directly as the body.
             const res = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
-                body: params.toString()
+                body: base64Payload
             });
             const data = await res.json();
             console.log("[AI SCAN] Roboflow response:", data);
             if (!res.ok) throw new Error("Roboflow error: " + (data.message || res.status));
-            const label = data.label?.toLowerCase?.() || data.result?.toLowerCase?.() || "";
+
+            let label = "";
+            if (data.predictions && Array.isArray(data.predictions) && data.predictions.length > 0) {
+                // Find prediction with highest confidence
+                const topPrediction = data.predictions.reduce((prev, current) => {
+                    return (prev.confidence > current.confidence) ? prev : current;
+                });
+                label = topPrediction.class.toLowerCase();
+            } else {
+                label = data.label?.toLowerCase?.() || data.result?.toLowerCase?.() || "";
+            }
+
             const status = interpretLabel(label);
             resultEl.textContent = status.messageBn;
             statusEl.textContent = "";
@@ -85,7 +94,7 @@ function fileToBase64(file) {
 }
 
 function interpretLabel(label) {
-    if (label.includes("rotten") || label.includes("mold") || label.includes("unhealthy") || label.includes("sick")) {
+    if (label.includes("rot") || label.includes("mold") || label.includes("unhealthy") || label.includes("sick") || label.includes("disease") || label.includes("blight")) {
         return {
             healthStatus: "rotten",
             messageBn: "ফসল নষ্ট হতে পারে, দ্রুত শুকান ও আলাদা রাখুন।"
@@ -95,4 +104,4 @@ function interpretLabel(label) {
         healthStatus: "fresh",
         messageBn: "ফসল দেখতে সুস্থ।"
     };
-} 
+}
