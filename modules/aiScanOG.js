@@ -1,43 +1,72 @@
-// modules/aiScanner.js
+// modules/aiScanOG.js
 import { HF_CONFIG } from "../src/config.js";
 
 export function initAiScanner() {
-    const scanInput = document.getElementById("scan-image-input");
-    if (!scanInput) return;
+    // HTML IDs from app.html
+    const fileInput = document.getElementById("ai-scan-input");
+    const scanButton = document.getElementById("ai-scan-button");
+    const statusEl = document.getElementById("ai-scan-status");
+    const resultEl = document.getElementById("ai-scan-result");
+    const previewEl = document.getElementById("ai-scan-preview");
+    
+    let selectedFile = null;
+    
+    if (!fileInput || !scanButton || !resultEl || !previewEl) return;
 
-    scanInput.addEventListener("change", async () => {
-        const user = window.HG.getCurrentUser();
-        if (!user) return;
-        const file = scanInput.files[0];
-        if (!file) return;
-        const resultEl = document.getElementById("scan-result");
-        resultEl.textContent = "স্ক্যান হচ্ছে...";
+    // Show image preview on file select
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        selectedFile = file;
+        resultEl.textContent = "";
+        statusEl.textContent = "";
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                previewEl.src = reader.result;
+                previewEl.classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewEl.src = "";
+            previewEl.classList.add("hidden");
+        }
+    });
 
+    scanButton.addEventListener("click", async () => {
+        const file = selectedFile || fileInput.files[0];
+        if (!file) {
+            resultEl.textContent = "Please select an image first.";
+            return;
+        }
+        resultEl.textContent = "";
+        statusEl.textContent = "Scanning...";
         try {
             const blob = await compressImage(file, 512);
-            const res = await fetch(HF_CONFIG.imageApiUrl, {
+            const res = await fetch(HF_CONFIG.apiUrl, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${HF_CONFIG.apiKey}`
                 },
                 body: blob
             });
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
             const json = await res.json();
-            const label = json[0]?.label?.toLowerCase() || "";
+            const label = json[0]?.label?.toLowerCase?.() || "";
             const status = interpretLabel(label);
             resultEl.textContent = status.messageBn;
+            statusEl.textContent = "";
             // Optional: attach to latest active batch
             if (window.HG_batches) {
                 window.HG_batches.updateLatestBatchHealth(status.healthStatus);
             }
-        } catch {
-            resultEl.textContent = "স্ক্যান করা যায়নি। পরে চেষ্টা করুন।";
+        } catch (err) {
+            statusEl.textContent = "Could not scan—please try again later.";
+            resultEl.textContent = "";
         }
     });
 }
 
 function interpretLabel(label) {
-    // Very simple mapping; customize by model labels
     if (label.includes("rotten") || label.includes("mold")) {
         return {
             healthStatus: "rotten",
@@ -57,7 +86,6 @@ function compressImage(file, maxSize) {
         const reader = new FileReader();
         reader.onload = e => {
             img.onload = () => {
-                const canvas = document.createElement("canvas");
                 let { width, height } = img;
                 if (width > height) {
                     if (width > maxSize) {
@@ -70,6 +98,7 @@ function compressImage(file, maxSize) {
                         height = maxSize;
                     }
                 }
+                const canvas = document.createElement("canvas");
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext("2d");

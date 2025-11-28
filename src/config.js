@@ -13,3 +13,8 @@ export const WEATHER_CONFIG = {
     baseUrl: import.meta.env.VITE_WEATHER_BASE_URL,
     apiKey: import.meta.env.VITE_WEATHER_API_KEY
 };
+
+export const RF_CONFIG = {
+    apiUrl : import.meta.env.VITE_RF_API_URL,
+    apiKey: import.meta.env.VITE_RF_API_KEY
+}

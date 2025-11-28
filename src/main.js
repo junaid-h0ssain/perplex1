@@ -3,7 +3,7 @@ import { initAuth } from "../modules/auth.js";
 import { initProfile } from "../modules/profile.js";
 import { initBatches } from "../modules/batches.js";
 import { initWeather } from "../modules/weather.js";
-import { initAiScanner } from "../modules/aiScanOG.js";
+import { initAiScanner } from "../modules/aiScan.js";
 import { initOffline } from "../modules/offline.js";
 import { initUI } from "../modules/ui.js";
 import { auth } from "./firebase-config.js";

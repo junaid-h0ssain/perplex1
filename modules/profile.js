@@ -318,7 +318,6 @@ export async function loadProfile() {
         profileBio.textContent = data.bio || "";
         profileCreated.textContent = data.createdAt || "";
         document.getElementById("edit-name").value = data.name || "";
-        document.getElementById("edit-phone").value = data.phone || "";
         document.getElementById("edit-bio").value = data.bio || "";
         const languageSelect = document.getElementById("language-select");
         if (languageSelect && data.language) languageSelect.value = data.language;
